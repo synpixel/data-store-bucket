@@ -137,7 +137,7 @@ local function listEntries<T>(self: DataStoreBucket<T>): BucketPages<T>
 
 		pages.cursor = pages.page[DATA_KEYS.nextCursor]
 		pages.page = getBucket(dataStore, pages.cursor)
-		pages.finished = pages.cursor == nil
+		pages.finished = pages.page[DATA_KEYS.nextCursor] == nil
 	end
 
 	return pages
