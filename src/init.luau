@@ -74,7 +74,7 @@ local function save<T>(self: DataStoreBucket<T>)
 
 	while bucket.nextCursor ~= nil do
 		cursor = bucket.nextCursor
-		bucket = self._dataStore:GetAsync(cursor)
+		bucket = self._dataStore:GetAsync(cursor, nil :: any)
 	end
 
 	local chunks: { { T } } = { bucket.entries }
@@ -136,7 +136,7 @@ function DataStoreBucket.new<T>(config: DataStoreBucketConfiguration): DataStore
 	local self = {
 		_dataStore = config.dataStore,
 		_maxEntries = config.maxEntries,
-		_queue = {} :: { T },
+		_queue = {},
 		add = add,
 		save = save,
 		listEntries = listEntries,
@@ -147,6 +147,14 @@ function DataStoreBucket.new<T>(config: DataStoreBucketConfiguration): DataStore
 	return self
 end
 
-export type DataStoreBucket<T> = typeof(DataStoreBucket.new(...))
+export type DataStoreBucket<T> = {
+	_dataStore: DataStore,
+	_maxEntries: number,
+	_queue: { T },
+	_lastBucketCursor: string,
+	add: (self: DataStoreBucket<T>, ...T) -> (),
+	save: (self: DataStoreBucket<T>) -> (),
+	listEntries: (self: DataStoreBucket<T>) -> BucketPages<T>,
+}
 
 return DataStoreBucket
