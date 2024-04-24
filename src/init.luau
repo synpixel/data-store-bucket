@@ -17,6 +17,10 @@ type Bucket<T> = {
 
 local FIRST_BUCKET_CURSOR = "bucket_1"
 local LATEST_BUCKET_CURSOR_KEY = "latest"
+local DATA_KEYS = {
+	nextCursor = "n",
+	entries = "e",
+}
 
 local DataStoreBucket = {}
 
@@ -32,8 +36,8 @@ local function getBucket<T>(dataStore: DataStore, cursor: string): Bucket<T>
 	return dataStore:GetAsync(cursor, nil :: any)
 		or dataStore:UpdateAsync(cursor, function(bucket)
 			return {
-				entries = {},
-				nextCursor = nil,
+				[DATA_KEYS.entries] = {},
+				[DATA_KEYS.nextCursor] = nil,
 			}
 		end)
 end
@@ -43,7 +47,7 @@ local function updateBucket<T>(dataStore: DataStore, cursor: string, newEntries:
 		local entries = {}
 
 		if bucket then
-			for _, entry in bucket.entries do
+			for _, entry in bucket[DATA_KEYS.entries] do
 				table.insert(entries, entry)
 			end
 		end
@@ -53,8 +57,8 @@ local function updateBucket<T>(dataStore: DataStore, cursor: string, newEntries:
 		end
 
 		return {
-			entries = entries,
-			nextCursor = nextCursor,
+			[DATA_KEYS.entries] = entries,
+			[DATA_KEYS.nextCursor] = nextCursor,
 		}
 	end)
 end
@@ -72,19 +76,19 @@ local function save<T>(self: DataStoreBucket<T>)
 
 	local cursor, bucket: Bucket<T> = self._lastBucketCursor, getBucket(self._dataStore, self._lastBucketCursor)
 
-	while bucket.nextCursor ~= nil do
-		cursor = bucket.nextCursor
+	while bucket[DATA_KEYS.nextCursor] ~= nil do
+		cursor = bucket[DATA_KEYS.nextCursor]
 		bucket = self._dataStore:GetAsync(cursor, nil :: any)
 	end
 
-	if #bucket.entries >= self._maxEntries then
+	if #bucket[DATA_KEYS.entries] >= self._maxEntries then
 		local nextCursor = incrementCursor(cursor, 1)
 		updateBucket(self._dataStore, cursor, {}, nextCursor)
 		bucket = getBucket(self._dataStore, nextCursor)
 		cursor = nextCursor
 	end
 
-	local chunks: { { T } } = { bucket.entries }
+	local chunks: { { T } } = { bucket[DATA_KEYS.entries] }
 
 	while #self._queue > 0 do
 		if #chunks[#chunks] >= self._maxEntries then
@@ -120,10 +124,10 @@ local function listEntries<T>(self: DataStoreBucket<T>): BucketPages<T>
 	local pages = {}
 	pages.cursor = FIRST_BUCKET_CURSOR
 	pages.page = getBucket(dataStore, pages.cursor)
-	pages.finished = pages.page.nextCursor == nil
+	pages.finished = pages.page[DATA_KEYS.nextCursor] == nil
 
 	function pages:getCurrentPage()
-		return pages.page.entries
+		return pages.page[DATA_KEYS.entries]
 	end
 
 	function pages:advanceToNextPage()
@@ -131,9 +135,9 @@ local function listEntries<T>(self: DataStoreBucket<T>): BucketPages<T>
 			error("no page to advance to")
 		end
 
-		pages.cursor = pages.page.nextCursor
+		pages.cursor = pages.page[DATA_KEYS.nextCursor]
 		pages.page = getBucket(dataStore, pages.cursor)
-		pages.finished = pages.page.nextCursor == nil
+		pages.finished = pages.cursor == nil
 	end
 
 	return pages
