@@ -1,2 +1,3 @@
-# data-store-bucket
-buckets your data
+# DataStoreBucket
+
+DataStore library for bucketing data
