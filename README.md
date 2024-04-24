@@ -16,7 +16,7 @@ local bucket = DataStoreBucket.new({
 local pages = bucket:listEntries()
 
 while true do
-    print(pages:getCurrentPage())
+    print(pages:getCurrentPage()) -- an array of entries
 
     if pages.finished then
         break
@@ -25,8 +25,8 @@ while true do
     pages:advanceToNextPage()
 end
 
-bucket:add(unpack(table.create(50, "foo")))
-bucket:add(unpack(table.create(50, "baz")))
+bucket:add(unpack(table.create(50, "foo"))) -- this will create 2 buckets because the maximum amount of entries is 25
+bucket:add(unpack(table.create(50, "baz"))) -- this will create 2 buckets because the maximum amount of entries is 25
 
 bucket:save() -- i advise you to only call this rarely (preferably once with :BindToClose) but this is for the sake of the example
 ```
