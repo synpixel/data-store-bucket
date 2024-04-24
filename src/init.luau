@@ -3,11 +3,11 @@ export type DataStoreBucketConfiguration = {
 	maxEntries: number,
 }
 
-export type BucketPages<T> = {
+export type BucketEntryPages<T> = {
 	cursor: string,
 	finished: boolean,
-	getCurrentPage: (self: BucketPages<T>) -> { T },
-	advanceToNextPage: (self: BucketPages<T>) -> (),
+	getCurrentPage: (self: BucketEntryPages<T>) -> { T },
+	advanceToNextPage: (self: BucketEntryPages<T>) -> (),
 }
 
 type Bucket<T> = {
@@ -118,7 +118,7 @@ local function save<T>(self: DataStoreBucket<T>)
 	end)
 end
 
-local function listEntries<T>(self: DataStoreBucket<T>): BucketPages<T>
+local function listEntries<T>(self: DataStoreBucket<T>): BucketEntryPages<T>
 	local dataStore = self._dataStore
 
 	local pages = {}
@@ -165,7 +165,7 @@ export type DataStoreBucket<T> = {
 	_lastBucketCursor: string,
 	add: (self: DataStoreBucket<T>, ...T) -> (),
 	save: (self: DataStoreBucket<T>) -> (),
-	listEntries: (self: DataStoreBucket<T>) -> BucketPages<T>,
+	listEntries: (self: DataStoreBucket<T>) -> BucketEntryPages<T>,
 }
 
 return DataStoreBucket
