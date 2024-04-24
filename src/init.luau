@@ -77,16 +77,23 @@ local function save<T>(self: DataStoreBucket<T>)
 		bucket = self._dataStore:GetAsync(cursor, nil :: any)
 	end
 
+	if #bucket.entries >= self._maxEntries then
+		local nextCursor = incrementCursor(cursor, 1)
+		updateBucket(self._dataStore, cursor, {}, nextCursor)
+		bucket = getBucket(self._dataStore, nextCursor)
+		cursor = nextCursor
+	end
+
 	local chunks: { { T } } = { bucket.entries }
 
 	while #self._queue > 0 do
-		local entry = self._queue[1]
-		table.remove(self._queue, 1)
-		table.insert(chunks[#chunks], entry)
-
 		if #chunks[#chunks] >= self._maxEntries then
 			table.insert(chunks, {})
 		end
+
+		local entry = self._queue[1]
+		table.remove(self._queue, 1)
+		table.insert(chunks[#chunks], entry)
 	end
 
 	for i, chunk in chunks do
